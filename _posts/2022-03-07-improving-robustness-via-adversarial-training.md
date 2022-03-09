@@ -2,7 +2,7 @@
 layout: post
 title: Improving on Single Source Robustness in Self-Driving Cars
 subtitle: Applications of Adversarial Training 
-# cover-img: /assets/img/path.jpg
+cover-img: /assets/img/cars_on_a_road.webp
 thumbnail-img: /assets/img/tesla.jpeg
 # share-img: /assets/img/path.jpg
 # tags: [books, test]
@@ -14,9 +14,27 @@ Autonomous vehicles have been populating streets throughout the world in recent 
 
 # Previous Works
 
+There has been research on improving the single source robustness in deep fusion models, specifically done by Taewan Kim and Joydeep Ghosh. In their research paper, the authors explored their novel training algorithms, in which they added perturbations (noise) to the data from the input sources and trained the model under these conditions. They finetuned the model on clean data and then introduced noisy data either through downsampling or generating random Gaussian noise. 
 
+[Add image of noise from Gaussian]
+
+The experimental setup consisted of developing and testing the model on clean data, data where one input source is corrupted (single source noise or SSN), and data where all input sources are corrupted (all source noise or ASN). For their metrics, they used the minumum average precision (minAP) score, which is the lowest AP score across all the input sources and the maximum difference between the AP scores (maxDiffAP), which finds the maximum difference among the scores as a measure of balanced robustness.
+
+For their results, the authors observed that the model trained with SSN performed the best on Gaussian noisy data and was still comparable in its performance on clean data in comparison to the model trained on clean data and models trained with ASN. This showcased a new method in training these models so that it is robust against single source corruption yet can perform as well as a model trained normally on clean data. 
+
+[Add image of results]
 
 # Background
+
+The experiment that the authors conducted consist of two components that we will share for our experiment as well: the KITTI dataset and the AVOD model. 
+
+The KITTI (Karlsruhe Institute of Technology and Toyota Technological Institute) dataset is a popular benchmark dataset for autonomous driving research. This contains six hours of traffic scenarios, which were recorded using various modalities such as color stereo cameras and a Velodyne 3D laser scanner. The scenarios recorded range between different locations such as rural streets, freeways, and city roads. For our purposes of the experiment, we utilize the benchmarks for object detection tasks, which provides accurate bounding boxes in both 3D and BEV (Bird’s Eye View) for object types such as cars, cyclists, and pedestrians. 
+
+[Add image of data]
+
+We use the AVOD (Aggregate View Object Detection) model, which is a neural network that uses LIDAR point clouds and RGB images to deliver real-time object detection in the form of bounding boxes and labels for objects in an image. It is structured by two subnetworks, a region proposal network (RPN) and a second stage detector network, the former generating 3D object proposals for multiple object classes and the latter creating accurate oriented 3D bounding boxes and category classifications for predictions. The AVOD model has state of the art results on the KITTI object detection benchmark, making it a great candidate for our baseline model. Using the same setup as Taewan Kim and Joydeep Ghosh, we will train the model solely on the car class for the object detection tasks and use the feature pyramid network for feature extraction. Below highlights the structure of the AVOD model, in which the blue components represent the feature extractors, pink components represent the region proposal network (RPN), green components represent the second stage detector network, and the yellow components representing the adversarial examples generation process.
+
+[Add image of AVOD model]
 
 # Our Proposal
 
