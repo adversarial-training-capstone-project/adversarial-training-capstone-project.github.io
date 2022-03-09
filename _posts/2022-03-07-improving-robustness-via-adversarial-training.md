@@ -38,16 +38,42 @@ We use the AVOD (Aggregate View Object Detection) model, which is a neural netwo
 
 # Our Proposal
 
-# Methodology
+While the previous works on this subject have proven to have substantial results, we explored another approach in improving the robustness of these models through adversarial training. But what is adversarial training?
+
+## Methodology
+
+For us to understand this approach, we need to define what an adversarial example is. An adversarial example is an intentionally mislabeled image by altering the pixel values so that the changes made to the image are indistinguishable to the human eye, but recognizable by a model. Although it is obvious to us that this is an image of a pig, the model interprets this as an airliner given the small perturbations added to the pixel values of this image. 
+
+[Add image of pig]
+
+This poses a particular threat to safety-critical applications of ML, notably self-driving cars, as the noise can be intentionally optimized on the inputted data to control the decisions made by the model. For instance, an input source can face intentional corruption to where certain objects on the road are no longer detected such as pedestrians. 
+
+[Add image of pedestrian bounding box]
+
+There are different approaches for adversarial training, but for our experiment, we will use Fast Gradient Sign Method (FGSM) as our strategy of finding the best perturbations. Additionally, given the structure of the AVOD model, we will be adding the perturbations to the feature maps, which are the transformations of the input data so that it can be passed through the deep fusion layers. 
+
+[Add image of our AVOD model proposal]
+
+Usually, we focus on minimizing the loss to optimize the parameters of the model given the input and the correct labels. However, for creating adversarial examples, our goal is to maximize the loss to optimize the noise added to the input enough so that it is mislabeled. Through FGSM, we select an epsilon value that represents the maximum magnitude of delta and update the values of the input through adding the epsilon in the direction of the gradient descent for the parameters. Thus, for all the values in the input, we are either adding or subtracting a perturbation that we defined as epsilon but small enough to where the changes to the image are unrecognizable. 
+
+[Add image of FGSM summary]
+
+Overall, we are solving for the following optimization problem where we optimize the input to find the maximum loss given a perturbation that is constrained to our epsilon value, but then optimizing the model parameters to minimize the overall loss in order to build its robustness.
+
+[Add image of training model procedure]
 
 # Experiment
 
+For our experiment, we set it up so that we are evaluating three models: a model trained normally on clean data, a model fine-tuned with adversarial data, and a model fine-tuned with single source noise (SSN) data. We then evaluate their performances on clean data, adversarial data, and SSN data and compare their minAP scores and regular AP scores as done before in the previous works.   
+
+[Add image of experimental setup]
+
+We were able to observe the following results from our experiment:
+
+[Add image of the results]
+
+The models that were trained using SSN and clean data performed poorly on adversarial data, resulting in extremely low minAP scores. This indicates that the attacks on the input sources were succesful. However, the model trained using adversarial examples had a signficiantly better performance on corrupted adversarial data and had comparable results on clean and SSN data to the other models. Thus, we can observe that training with adverserial examples proved to be successful in improving the robustness of the deep fusion model and did not decrease significantly in performance for the other measures of data. 
+
 # Conclusion
 
-Under what circumstances should we step off a path? When is it essential that we finish what we start? If I bought a bag of peanuts and had an allergic reaction, no one would fault me if I threw it out. If I ended a relationship with a woman who hit me, no one would say that I had a commitment problem. But if I walk away from a seemingly secure route because my soul has other ideas, I am a flake?
-
-The truth is that no one else can definitively know the path we are here to walk. It’s tempting to listen—many of us long for the omnipotent other—but unless they are genuine psychic intuitives, they can’t know. All others can know is their own truth, and if they’ve actually done the work to excavate it, they will have the good sense to know that they cannot genuinely know anyone else’s. Only soul knows the path it is here to walk. Since you are the only one living in your temple, only you can know its scriptures and interpretive structure.
-
-At the heart of the struggle are two very different ideas of success—survival-driven and soul-driven. For survivalists, success is security, pragmatism, power over others. Success is the absence of material suffering, the nourishing of the soul be damned. It is an odd and ironic thing that most of the material power in our world often resides in the hands of younger souls. Still working in the egoic and material realms, they love the sensations of power and focus most of their energy on accumulation. Older souls tend not to be as materially driven. They have already played the worldly game in previous lives and they search for more subtle shades of meaning in this one—authentication rather than accumulation. They are often ignored by the culture at large, although they really are the truest warriors.
-
-A soulful notion of success rests on the actualization of our innate image. Success is simply the completion of a soul step, however unsightly it may be. We have finished what we started when the lesson is learned. What a fear-based culture calls a wonderful opportunity may be fruitless and misguided for the soul. Staying in a passionless relationship may satisfy our need for comfort, but it may stifle the soul. Becoming a famous lawyer is only worthwhile if the soul demands it. It is an essential failure if you are called to be a monastic this time around. If you need to explore and abandon ten careers in order to stretch your soul toward its innate image, then so be it. Flake it till you make it.
+We explored the importance of developing robustness in deep fusion modeling as seen in the area of autonomous vehicles. While there has been much research done in making these models as accurate as they can be, it is imperative that we focus on ensuring that the model can still make proper and reasonable inferences when faced with unforeseen circumstances. As these vehicles are driving around in the streets, it is a huge responsibility to protect our lives and avoid any severe consequences. Through adversarial training, we were able to demonstrate that this is a viable approach in improving the robustness against single source corruption in addition to previous works. Our approach is both robust against randomly generate noise as well as adversarial examples, which is important to consider if there is any intentional corruption from a third party. We hope our work inspires further exploration of using adversarial training in developing robustness.
