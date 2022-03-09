@@ -32,17 +32,21 @@ The KITTI (Karlsruhe Institute of Technology and Toyota Technological Institute)
 
 ![Example Data](/assets/img/example_data.png){: .mx-auto.d-block :}
 
-We use the AVOD (Aggregate View Object Detection) model, which is a neural network that uses LIDAR point clouds and RGB images to deliver real-time object detection in the form of bounding boxes and labels for objects in an image. It is structured by two subnetworks, a region proposal network (RPN) and a second stage detector network, the former generating 3D object proposals for multiple object classes and the latter creating accurate oriented 3D bounding boxes and category classifications for predictions. The AVOD model has state of the art results on the KITTI object detection benchmark, making it a great candidate for our baseline model. Using the same setup as Taewan Kim and Joydeep Ghosh, we will train the model solely on the car class for the object detection tasks and use the feature pyramid network for feature extraction. Below highlights the structure of the AVOD model, in which the blue components represent the feature extractors, pink components represent the region proposal network (RPN), green components represent the second stage detector network, and the yellow components representing the adversarial examples generation process.
+We use the AVOD (Aggregate View Object Detection) model, which is a neural network that uses LIDAR point clouds and RGB images to deliver real-time object detection in the form of bounding boxes and labels for objects in an image. It is structured by two subnetworks, a region proposal network (RPN) and a second stage detector network, the former generating 3D object proposals for multiple object classes and the latter creating accurate oriented 3D bounding boxes and category classifications for predictions. **The AVOD model has state of the art results on the KITTI object detection benchmark, making it a great candidate for our baseline model.** Using the same setup as Taewan Kim and Joydeep Ghosh, we will train the model solely on the car class for the object detection tasks and use the feature pyramid network for feature extraction. Below highlights the structure of the AVOD model, in which the blue components represent the feature extractors, pink components represent the region proposal network (RPN), and the green components represent the second stage detector network.
 
 ![AVOD Architecture](/assets/img/avod_arch.png){: .mx-auto.d-block :}
 
-# Our Proposal
+Through taking in the image and LIDAR input, the AVOD model is able to produce results such as the following which creates both labels for the objects as well as bounding boxes around them. 
 
-While the previous works on this subject have proven to have substantial results, we explored another approach in improving the robustness of these models through adversarial training. But what is adversarial training?
+![AVOD Output](/assets/img/avod_output.png){: .mx-auto.d-block :}
 
-## Methodology
+# Adversarial Training
 
-For us to understand this approach, we need to define what an adversarial example is. An adversarial example is an intentionally mislabeled image by altering the pixel values so that the changes made to the image are indistinguishable to the human eye, but recognizable by a model. Although it is obvious to us that this is an image of a pig, the model interprets this as an airliner given the small perturbations added to the pixel values of this image. 
+While the previous works on this subject have proven to have substantial results, there is another approach in improving robustness: adversarial training. But what is adversarial training? In order to explain adversarial training, we need to define what an adversarial example is. 
+
+**An adversarial example is an intentionally mislabeled image by altering the pixel values so that the changes made to the image are indistinguishable to the human eye, but recognizable by a model.** 
+
+Although it is obvious to us that this is an image of a pig, the model interprets this as an airliner given the small perturbations added to the pixel values of this image. 
 
 ![Pig](/assets/img/pig.png){: .mx-auto.d-block :}
 
@@ -50,15 +54,23 @@ This poses a particular threat to safety-critical applications of ML, notably se
 
 ![Pedestrian Bounding Box](/assets/img/ped_box.png){: .mx-auto.d-block :}
 
+Adversarial training is then the process of incorporating adversarial examples within the training procedure of a model in order to build its robustness against corruption. 
+
+# Our Proposal
+
+For our research, we will use adversarial training in the training procedure for the AVOD model and compare its results to other approaches in improving robustness as well as to the normally trained model.
+
 There are different approaches for adversarial training, but for our experiment, we will use Fast Gradient Sign Method (FGSM) as our strategy of finding the best perturbations. Additionally, given the structure of the AVOD model, we will be adding the perturbations to the feature maps, which are the transformations of the input data so that it can be passed through the deep fusion layers. 
 
 ![AVOD Arch Addition](/assets/img/avod_arch_add.png){: .mx-auto.d-block :}
+
+## Fast Gradient Sign Method (FGSM)
 
 Usually, we focus on minimizing the loss to optimize the parameters of the model given the input and the correct labels. However, for creating adversarial examples, our goal is to maximize the loss to optimize the noise added to the input enough so that it is mislabeled. Through FGSM, we select an epsilon value that represents the maximum magnitude of delta and update the values of the input through adding the epsilon in the direction of the gradient descent for the parameters. Thus, for all the values in the input, we are either adding or subtracting a perturbation that we defined as epsilon but small enough to where the changes to the image are unrecognizable. 
 
 ![FGSM Summary](/assets/img/fgsm_summary.png){: .mx-auto.d-block :}
 
-Overall, we are solving for the following optimization problem where we optimize the input to find the maximum loss given a perturbation that is constrained to our epsilon value, but then optimizing the model parameters to minimize the overall loss in order to build its robustness.
+**Overall, we are solving for the following optimization problem where we optimize the input to find the maximum loss given a perturbation that is constrained to our epsilon value, but then optimizing the model parameters to minimize the overall loss in order to build its robustness.**
 
 ![Big Picture](/assets/img/overall_proc.png){: .mx-auto.d-block :}
 
@@ -72,7 +84,7 @@ We were able to observe the following results from our experiment:
 
 [Add image of the results]
 
-The models that were trained using SSN and clean data performed poorly on adversarial data, resulting in extremely low minAP scores. This indicates that the attacks on the input sources were succesful. However, the model trained using adversarial examples had a signficiantly better performance on corrupted adversarial data and had comparable results on clean and SSN data to the other models. Thus, we can observe that training with adverserial examples proved to be successful in improving the robustness of the deep fusion model and did not decrease significantly in performance for the other measures of data. 
+The models that were trained using SSN and clean data performed poorly on adversarial data, resulting in extremely low minAP scores. This indicates that the attacks on the input sources were succesful. **However, the model trained using adversarial examples had a signficiantly better performance on corrupted adversarial data and had comparable results on clean and SSN data to the other models.** Thus, we can observe that training with adverserial examples proved to be successful in improving the robustness of the deep fusion model and did not decrease significantly in performance for the other measures of data. 
 
 # Conclusion
 
