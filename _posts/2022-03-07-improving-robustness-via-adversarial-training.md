@@ -15,12 +15,14 @@ Autonomous vehicles have been populating streets throughout the world in recent 
 It is important that these models are significantly accurate in detecting objects such as other vehicles and pedestrians, however, **it is essential that these models are robust against corruption of the input sources**. If the autonomous vehicle is in an environment where one sensor is weighted more heavily than the others and it faces some form of corruption, we need to ensure that the model is robust enough to make the proper judgement. If this issue is not addressed, this could lead to severe consequences on the road and thus making these vehicles unsafe to be on the roads.
 
 ![Poster SSN](/assets/img/taewan_poster_ssn.png){: .mx-auto.d-block :}
+*Taken from Taewan Kim and Joydeep Ghosh's Research Poster [1]*
 
 # Previous Works
 
 There has been research on improving the single source robustness in deep fusion models, specifically done by Taewan Kim and Joydeep Ghosh. In their research paper, the authors explored their novel training algorithms, in which they added perturbations (noise) to the data from the input sources and trained the model under these conditions. They finetuned the model on clean data and then introduced noisy data either through downsampling or generating random Gaussian noise. 
 
 ![Noise](/assets/img/noise.png){: .mx-auto.d-block :}
+*Effects of Gaussian Noise on Image [1]*
 
 The experimental setup consisted of developing and testing the model on clean data, data where one input source is corrupted (single source noise or SSN), and data where all input sources are corrupted (all source noise or ASN). For their metrics, they used the minumum average precision (minAP) score, which is the lowest AP score across all the input sources and the maximum difference between the AP scores (maxDiffAP), which finds the maximum difference among the scores as a measure of balanced robustness. **The authors observed that the model trained with SSN performed the best on Gaussian noisy data and was still comparable in its performance on clean data in comparison to the model trained on clean data and models trained with ASN.** This showcased a new method in training these models so that it is robust against single source corruption yet can perform as well as a model trained normally on clean data. 
 
@@ -31,14 +33,17 @@ The experiment that the authors conducted consist of two components that we will
 The KITTI (Karlsruhe Institute of Technology and Toyota Technological Institute) dataset is a popular benchmark dataset for autonomous driving research. This contains six hours of traffic scenarios, which were recorded using various modalities such as color stereo cameras and a Velodyne 3D laser scanner. The scenarios recorded range between different locations such as rural streets, freeways, and city roads. For our purposes of the experiment, we utilize the benchmarks for object detection tasks, which provides accurate bounding boxes in both 3D and BEV (Bird’s Eye View) for object types such as cars, cyclists, and pedestrians. 
 
 ![Example Data](/assets/img/example_data.png){: .mx-auto.d-block :}
+*Example Data Image from KITTI Dataset [3]*
 
 We use the AVOD (Aggregate View Object Detection) model, which is a neural network that uses LIDAR point clouds and RGB images to deliver real-time object detection in the form of bounding boxes and labels for objects in an image. It is structured by two subnetworks, a region proposal network (RPN) and a second stage detector network, the former generating 3D object proposals for multiple object classes and the latter creating accurate oriented 3D bounding boxes and category classifications for predictions. **The AVOD model has state of the art results on the KITTI object detection benchmark, making it a great candidate for our baseline model.** Using the same setup as Taewan Kim and Joydeep Ghosh, we will train the model solely on the car class for the object detection tasks and use the feature pyramid network for feature extraction. Below highlights the structure of the AVOD model, in which the blue components represent the feature extractors, pink components represent the region proposal network (RPN), and the green components represent the second stage detector network.
 
 ![AVOD Architecture](/assets/img/avod_arch.png){: .mx-auto.d-block :}
+*AVOD Architecture [2]*
 
 Through taking in the image and LIDAR input, the AVOD model is able to produce results such as the following which creates both labels for the objects as well as bounding boxes around them. 
 
 ![AVOD Output](/assets/img/avod_output.png){: .mx-auto.d-block :}
+*Output of AVOD Model*
 
 # Adversarial Training
 
@@ -49,10 +54,12 @@ While the previous works on this subject have proven to have substantial results
 Although it is obvious to us that this is an image of a pig, the model interprets this as an airliner given the small perturbations added to the pixel values of this image. 
 
 ![Pig](/assets/img/pig.png){: .mx-auto.d-block :}
+*Taken from gradientscience.org*
 
 This poses a particular threat to safety-critical applications of ML, notably self-driving cars, as the noise can be intentionally optimized on the inputted data to control the decisions made by the model. For instance, an input source can face intentional corruption to where certain objects on the road are no longer detected such as pedestrians. 
 
 ![Pedestrian Bounding Box](/assets/img/ped_box.png){: .mx-auto.d-block :}
+*Example of UC San Diego!*
 
 Adversarial training is then the process of incorporating adversarial examples within the training procedure of a model in order to build its robustness against corruption. 
 
@@ -82,10 +89,20 @@ For our experiment, we set it up so that we are evaluating three models: a model
 
 We were able to observe the following results from our experiment:
 
-[Add image of the results]
+![Results](/assets/img/slide48.png){: .mx-auto.d-block :}
 
 The models that were trained using SSN and clean data performed poorly on adversarial data, resulting in extremely low minAP scores. This indicates that the attacks on the input sources were succesful. **However, the model trained using adversarial examples had a signficiantly better performance on corrupted adversarial data and had comparable results on clean and SSN data to the other models.** Thus, we can observe that training with adverserial examples proved to be successful in improving the robustness of the deep fusion model and did not decrease significantly in performance for the other measures of data. 
 
 # Conclusion
 
 We explored the importance of developing robustness in deep fusion modeling as seen in the area of autonomous vehicles. While there has been much research done in making these models as accurate as they can be, it is imperative that we focus on ensuring that the model can still make proper and reasonable inferences when faced with unforeseen circumstances. As these vehicles are driving around in the streets, it is a huge responsibility to protect our lives and avoid any severe consequences. Through adversarial training, we were able to demonstrate that this is a viable approach in improving the robustness against single source corruption in addition to previous works. Our approach is both robust against randomly generate noise as well as adversarial examples, which is important to consider if there is any intentional corruption from a third party. We hope our work inspires further exploration of using adversarial training in developing robustness.
+
+## References
+
+[1] Kim, Taewan, and Joydeep Ghosh. "On single source robustness in deep fusion models." arXiv preprint arXiv:1906.04691 (2019). https://arxiv.org/pdf/1906.04691.pdf
+
+[2] Ku, Jason, et al. "Joint 3d proposal generation and object detection from view aggregation." 2018 IEEE/RSJ International Conference on Intelligent Robots and Systems (IROS). IEEE, 2018. https://arxiv.org/pdf/1712.02294.pdf
+
+[3] Geiger, Andreas, et al. "Vision meets robotics: The kitti dataset." The International Journal of Robotics Research 32.11 (2013): 1231-1237\.http://www.cvlibs.net/publications/Geiger20
+
+[4] Madry, Aleksander. “A Brief Introduction to Adversarial Examples.” A Brief Introduction to Adversarial Examples, 6 July 2018, https://gradientscience.org/intro\_adversarial/.
