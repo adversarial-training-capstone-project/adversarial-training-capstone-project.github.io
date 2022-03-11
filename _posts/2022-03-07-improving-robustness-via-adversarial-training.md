@@ -19,10 +19,9 @@ It is important that these models are significantly accurate in detecting object
 
 # Previous Works
 
-There has been research on improving the single source robustness in deep fusion models, specifically done by Taewan Kim and Joydeep Ghosh [1]. In their research paper, the authors explored their novel training algorithms, in which they added **perturbations** (noise) to the data from the input sources and trained the model under these conditions. They fine-tuned the model on clean data and then introduced noisy data either through downsampling or generating random Gaussian noise. 
+There has been research on improving the single source robustness in deep fusion models, specifically done by Taewan Kim and Joydeep Ghosh [1]. In their research paper, the authors explored their novel training algorithms, in which they added **perturbations** (noise) to the data from the input sources and trained the model under these conditions. They fine-tuned the model on clean data and then introduced noisy data either through downsampling or generating random Gaussian noise [1]. 
 
 ![Noise](/assets/img/noise.png){: .mx-auto.d-block :}
-*Effects of Gaussian Noise on Image [1]*{: .mx-auto.d-block :}
 
 The experimental setup consisted of developing and testing the model on the following:
 - Clean data
@@ -37,10 +36,9 @@ The experiment that the authors conducted consist of two components that we will
 
 ## KITTI Dataset
 
-The KITTI (Karlsruhe Institute of Technology and Toyota Technological Institute) dataset is a popular benchmark dataset for autonomous driving research. This contains six hours of traffic scenarios, which were recorded using various modalities such as color stereo cameras and a Velodyne 3D laser scanner. The scenarios recorded range between different locations such as rural streets, freeways, and city roads. For our purposes of the experiment, we utilize the benchmarks for object detection tasks, which provides accurate bounding boxes in both 3D and BEV (Bird’s Eye View) for object types such as cars, cyclists, and pedestrians. 
+The KITTI (Karlsruhe Institute of Technology and Toyota Technological Institute) dataset is a popular benchmark dataset for autonomous driving research. This contains six hours of traffic scenarios, which were recorded using various modalities such as color stereo cameras and a Velodyne 3D laser scanner. The scenarios recorded range between different locations such as rural streets, freeways, and city roads [3]. For our purposes of the experiment, we utilize the benchmarks for object detection tasks, which provides accurate bounding boxes in both 3D and BEV (Bird’s Eye View) for object types such as cars, cyclists, and pedestrians. 
 
 ![Example Data](/assets/img/example_data.png){: .mx-auto.d-block :}
-*Example Data Image from KITTI Dataset [3]*{: .mx-auto.d-block :}
 
 ## AVOD Model
 
@@ -48,15 +46,13 @@ We use the AVOD (Aggregate View Object Detection) model, which is a neural netwo
 - Region proposal network (RPN), which generates 3D object proposals for multiple object classes
 - Second stage detector network, which creates accurate oriented 3D bounding boxes and category classifications for predictions. 
 
-**The AVOD model has state of the art results on the KITTI object detection benchmark, making it a great candidate for our baseline model.** Using the same setup as Taewan Kim and Joydeep Ghosh, we will train the model solely on the car class for the object detection tasks and use the feature pyramid network for feature extraction. Below highlights the structure of the AVOD model, in which the blue components represent the feature extractors, pink components represent the region proposal network (RPN), and the green components represent the second stage detector network.
+**The AVOD model has state of the art results on the KITTI object detection benchmark, making it a great candidate for our baseline model.** Using the same setup as Taewan Kim and Joydeep Ghosh, we will train the model solely on the car class for the object detection tasks and use the feature pyramid network for feature extraction. Below highlights the structure of the AVOD model, in which the blue components represent the feature extractors, pink components represent the region proposal network (RPN), and the green components represent the second stage detector network [2].
 
 ![AVOD Architecture](/assets/img/avod_arch.png){: .mx-auto.d-block :}
-*AVOD Architecture [2]*{: .mx-auto.d-block :}
 
 Through taking in the image and LIDAR input, the AVOD model is able to produce results such as the following which creates both labels for the objects as well as bounding boxes around them. 
 
 ![AVOD Output](/assets/img/avod_output.png){: .mx-auto.d-block :}
-*Output of AVOD Model*{: .mx-auto.d-block :}
 
 # Adversarial Training
 
@@ -64,10 +60,9 @@ While the previous works on this subject have proven to have substantial results
 
 **An adversarial example is an intentionally mislabeled image by altering the pixel values so that the changes made to the image are indistinguishable to the human eye, but recognizable by a model.** 
 
-Although it is obvious to us that this is an image of a pig, the model interprets this as an airliner given the small perturbations added to the pixel values of this image. 
+Although it is obvious to us that this is an image of a pig, the model interprets this as an airliner given the small perturbations added to the pixel values of this image [4]. 
 
 ![Pig](/assets/img/pig.png){: .mx-auto.d-block :}
-*Taken from gradientscience.org*{: .mx-auto.d-block :}
 
 This poses a particular threat to safety-critical applications of ML, notably self-driving cars, as the noise can be intentionally optimized on the inputted data to control the decisions made by the model. For instance, an input source can face intentional corruption to where certain objects on the road are no longer detected such as pedestrians. 
 
@@ -81,7 +76,6 @@ Adversarial training is then the process of incorporating adversarial examples w
 For our research, we will use adversarial training in the training procedure for the AVOD model and compare its results to other approaches in improving robustness as well as to the normally trained model. Additionally, given the structure of the AVOD model, we will be adding the perturbations to the feature maps, which are the transformations of the input data so that it can be passed through the deep fusion layers. 
 
 ![AVOD Arch Addition](/assets/img/avod_arch_add.png){: .mx-auto.d-block :}
-*Our Proposed Addition to the AVOD Architecture*{: .mx-auto.d-block :}
 
 ## Fast Gradient Sign Method (FGSM)
 
@@ -90,16 +84,13 @@ There are different approaches for adversarial training, but for our experiment,
 Usually, we focus on minimizing the loss to optimize the parameters of the model given the input and the correct labels. However, for creating adversarial examples, our goal is to maximize the loss to optimize the noise added to the input enough so that it is mislabeled. Through FGSM, we select an epsilon value that represents the maximum magnitude of delta and update the values of the input through adding the epsilon in the direction of the gradient descent for the parameters. Thus, for all the values in the input, we are either adding or subtracting a perturbation that we defined as epsilon but small enough to where the changes to the image are unrecognizable. 
 
 ![FGSM Summary](/assets/img/fgsm_summary.png){: .mx-auto.d-block :}
-*Our Proposed Addition to the AVOD Architecture*{: .mx-auto.d-block :}
-
 **Overall, we are solving for the following optimization problem where we optimize the input to find the maximum loss given a perturbation that is constrained to our epsilon value, but then optimizing the model parameters to minimize the overall loss in order to build its robustness.**
 
 ![Big Picture](/assets/img/overall_proc.png){: .mx-auto.d-block :}
-*Our Proposed Addition to the AVOD Architecture*{: .mx-auto.d-block :}
 
 # Experiment
 
-We test our training algorithm for the 3D and BEV object detection tasks on the car class of the KITTI dataset and compare our results to the previous work done by Taewan Kim and Joydeep Ghosh [1]. These results are based on the difficulty levels within the dataset, ranging between easy, medium, and hard. We follow the standard metric of using an Average Precision (AP) score and reporting the minimum AP score across all input sources to assess robustness. \\
+We test our training algorithm for the 3D and BEV object detection tasks on the car class of the KITTI dataset and compare our results to the previous work done by Taewan Kim and Joydeep Ghosh [1]. These results are based on the difficulty levels within the dataset, ranging between easy, medium, and hard. We follow the standard metric of using an Average Precision (AP) score and reporting the minimum AP score across all input sources to assess robustness.
 
 We compare three different algorithms and assess their performance based on the data provided: 
 
@@ -116,7 +107,6 @@ AVOD model trained on
 and the inference on both of these data. Hence, we focus on the following experimental set-up to generate our results:  
 
 ![Experimental Setup](/assets/img/experimental_setup.png){: .mx-auto.d-block :}
-*Experimental Setup*{: .mx-auto.d-block :}
 
 
 We were able to observe the following results from our experiment:
